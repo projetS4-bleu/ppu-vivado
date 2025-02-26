@@ -21,53 +21,67 @@ entity Acteur is
 end Acteur;
 
 architecture Behavioral of Acteur is
-    constant c_pixel_per_tuile : integer := 8;
-    constant c_acteur_tuile_cols : integer := 2;
-    constant c_acteur_tuile_rows : integer := 2;
-    constant c_acteur_pixel_width : integer := c_acteur_tuile_cols * c_pixel_per_tuile;
-    constant c_acteur_pixel_height : integer := c_acteur_tuile_rows * c_pixel_per_tuile;
+    -- Constantes
+    constant c_int_pixel_per_tuile                  : integer := 8;
+    constant c_int_acteur_tuile_cols                : integer := 2;
+    constant c_int_acteur_tuile_rows                : integer := 2;
+    constant c_int_acteur_pixel_width               : integer := c_int_acteur_tuile_cols * c_int_pixel_per_tuile;
+    constant c_int_acteur_pixel_height              : integer := c_int_acteur_tuile_rows * c_int_pixel_per_tuile;
 
-    type t_tuile_array is array (0 to 3) of std_logic_vector(5 downto 0);
-    type t_tuile_flip_array is array (0 to 3) of std_logic_vector(1 downto 0);
+    -- Types
+    type t_tuile_array                          is array (0 to 3) of std_logic_vector(5 downto 0);
+    type t_tuile_flip_array                     is array (0 to 3) of std_logic_vector(1 downto 0);
 
-    signal r_pos_x : std_logic_vector(9 downto 0) := (others => '0');
-    signal r_pos_y : std_logic_vector(9 downto 0) := (others => '0');
-    signal r_tuiles : t_tuile_array := (others => (others => '0'));
-    signal r_tuile_flips : t_tuile_flip_array := (others => (others => '0'));
+    -- Registres
+    signal r_pos_x                              : std_logic_vector(9 downto 0) := (others => '0');
+    signal r_pos_y                              : std_logic_vector(9 downto 0) := (others => '0');
+    signal r_tuiles                             : t_tuile_array := (others => (others => '0'));
+    signal r_tuile_flips                        : t_tuile_flip_array := (others => (others => '0'));
+
+    -- Signaux non-signees pour logique
+    signal s_us_global_x                        : unsigned(9 downto 0);
+    signal s_us_global_y                        : unsigned(9 downto 0);
+    signal s_us_pos_x                           : unsigned(9 downto 0);
+    signal s_us_pos_y                           : unsigned(9 downto 0);
+    signal s_us_acteur_pixel_offset_x           : unsigned(3 downto 0);
+    signal s_us_acteur_pixel_offset_y           : unsigned(3 downto 0);
+    signal s_us_tuile_col                       : unsigned(0 downto 0);
+    signal s_us_tuile_row                       : unsigned(0 downto 0);
+    signal s_us_tuile_pixel_offset_x            : unsigned(2 downto 0);
+    signal s_us_tuile_pixel_offset_y            : unsigned(2 downto 0);
+    signal s_us_flipped_tuile_pixel_offset_x    : unsigned(2 downto 0);
+    signal s_us_flipped_tuile_pixel_offset_y    : unsigned(2 downto 0);
     
-    -- Input signals converted to unsigned
-    signal s_acteur_tuile_index : integer range 0 to 3;
-    signal s_global_x : unsigned;
-    signal s_global_y : unsigned;
-    signal s_pos_x : unsigned;
-    signal s_pos_y : unsigned;
+    -- Indices de tableaux
+    signal s_int_acteur_tuile_index             : integer range 0 to 3;
+    signal s_int_current_tuile_index            : integer range 0 to 3;
 
-    -- Helper signals to output correct pixel's color code
-    signal s_acteur_pixel_offset_x : unsigned;
-    signal s_acteur_pixel_offset_y : unsigned;
-    signal s_tuile_col : unsigned;
-    signal s_tuile_row : unsigned;
-    signal s_current_tuile_index : integer;
-    signal s_tuile_pixel_offset_x : std_logic_vector(2 downto 0);
-    signal s_tuile_pixel_offset_y : std_logic_vector(2 downto 0);
-    signal s_flipped_tuile_pixel_offset_x : std_logic_vector(2 downto 0);
-    signal s_flipped_tuile_pixel_offset_y : std_logic_vector(2 downto 0);
+    -- Signaux sortie pour offset pixel
+    signal s_slv_tuile_pixel_offset_x           : std_logic_vector(2 downto 0);
+    signal s_slv_tuile_pixel_offset_y           : std_logic_vector(2 downto 0);
+    signal s_slv_flipped_tuile_pixel_offset_x   : std_logic_vector(2 downto 0);
+    signal s_slv_flipped_tuile_pixel_offset_y   : std_logic_vector(2 downto 0);
 begin
-    s_acteur_tuile_index <= to_integer(unsigned(i_acteur_tuile_index));
-    s_global_x <= unsigned(i_global_x);
-    s_global_y <= unsigned(i_global_y);
-    s_pos_x <= unsigned(i_pos_x);
-    s_pos_y <= unsigned(i_pos_y);
-
-    s_acteur_pixel_offset_x <= s_global_x - s_pos_x;
-    s_acteur_pixel_offset_y <= s_global_y - s_pos_y;
-    s_tuile_col <= s_acteur_pixel_offset_x / c_pixel_per_tuile;
-    s_tuile_row <= s_acteur_pixel_offset_y / c_pixel_per_tuile;
-    s_current_tuile_index <= to_integer(s_tuile_col + (s_tuile_row * c_acteur_tuile_cols));
-    s_tuile_pixel_offset_x <= std_logic_vector(s_acteur_pixel_offset_x mod c_pixel_per_tuile);
-    s_tuile_pixel_offset_y <= std_logic_vector(s_acteur_pixel_offset_y mod c_pixel_per_tuile);
-    s_flipped_tuile_pixel_offset_x <= std_logic_vector((c_acteur_pixel_width - 1) - unsigned(s_tuile_pixel_offset_x));
-    s_flipped_tuile_pixel_offset_y <= std_logic_vector((c_acteur_pixel_height - 1) - unsigned(s_tuile_pixel_offset_y));
+    s_us_global_x                       <= unsigned(i_global_x);
+    s_us_global_y                       <= unsigned(i_global_y);
+    s_us_pos_x                          <= unsigned(r_pos_x);
+    s_us_pos_y                          <= unsigned(r_pos_y);
+    s_us_acteur_pixel_offset_x          <= resize(s_us_global_x - s_us_pos_x, 4);
+    s_us_acteur_pixel_offset_y          <= resize(s_us_global_y - s_us_pos_y, 4);
+    s_us_tuile_col                      <= s_us_acteur_pixel_offset_x(3 downto 3);
+    s_us_tuile_row                      <= s_us_acteur_pixel_offset_y(3 downto 3);
+    s_us_tuile_pixel_offset_x           <= s_us_acteur_pixel_offset_x(2 downto 0);
+    s_us_tuile_pixel_offset_y           <= s_us_acteur_pixel_offset_y(2 downto 0);
+    s_us_flipped_tuile_pixel_offset_x   <= (c_int_acteur_pixel_width - 1) - s_us_tuile_pixel_offset_x;
+    s_us_flipped_tuile_pixel_offset_y   <= (c_int_acteur_pixel_height - 1) - s_us_tuile_pixel_offset_y;
+    
+    s_int_acteur_tuile_index            <= to_integer(unsigned(i_acteur_tuile_index));
+    s_int_current_tuile_index           <= to_integer(s_us_tuile_col + (s_us_tuile_row * to_unsigned(c_int_acteur_tuile_cols, 2)));
+    
+    s_slv_tuile_pixel_offset_x          <= std_logic_vector(s_us_tuile_pixel_offset_x);
+    s_slv_tuile_pixel_offset_y          <= std_logic_vector(s_us_tuile_pixel_offset_y);
+    s_slv_flipped_tuile_pixel_offset_x  <= std_logic_vector(s_us_flipped_tuile_pixel_offset_x);
+    s_slv_flipped_tuile_pixel_offset_y  <= std_logic_vector(s_us_flipped_tuile_pixel_offset_y);
 
     UC : process(clk, reset)
     begin
@@ -77,51 +91,60 @@ begin
             r_tuiles <= (others => (others => '0'));
             r_tuile_flips <= (others => (others => '0'));
         elsif rising_edge(clk) then
-            -- Update sprite position
+            -- Position
             if i_we_pos = '1' then
                 r_pos_x <= i_pos_x;
                 r_pos_y <= i_pos_y;
             end if;
 
-            -- Update sprite tiles
+            -- Tuiles de l'acteur
             if i_we_acteur_tuile = '1' then
-                r_tuiles(s_acteur_tuile_index) <= i_acteur_new_tuile_id;
+                r_tuiles(s_int_acteur_tuile_index) <= i_acteur_new_tuile_id;
             end if;
 
-            -- Update if a tile is flipped horizontally and/or vertically
+            -- Flip tuile
             if i_we_tuile_flip = '1' then
-                r_tuile_flips(s_acteur_tuile_index) <= i_tuile_flip;
+                r_tuile_flips(s_int_acteur_tuile_index) <= i_tuile_flip;
             end if;
         end if;
     end process;
 
-    UT : process(r_pos_x, r_pos_y, r_tuiles, r_tuile_flips)
+    UT : process(s_us_global_x,
+                 s_us_global_y,
+                 s_us_pos_x,
+                 s_us_pos_y,
+                 r_tuile_flips,
+                 s_int_current_tuile_index,
+                 s_slv_flipped_tuile_pixel_offset_x,
+                 s_slv_tuile_pixel_offset_x,
+                 s_slv_flipped_tuile_pixel_offset_y,
+                 s_slv_tuile_pixel_offset_y)
     begin
-        -- If current pixel touches sprite
-        if s_global_x >= s_pos_x and 
-           s_global_x < (s_pos_x + c_acteur_pixel_width) and
-           s_global_y >= s_pos_y and
-           s_global_y < (s_pos_y + c_acteur_pixel_height)
+        o_tuile_id <= (others => '0');
+        o_tuile_pixel_x <= (others => '0');
+        o_tuile_pixel_y <= (others => '0');
+
+        -- Si acteur touche au pixel
+        if s_us_global_x >= s_us_pos_x and 
+           s_us_global_x < (resize(s_us_pos_x, 11) + c_int_acteur_pixel_width) and
+           s_us_global_y >= s_us_pos_y and
+           s_us_global_y < (resize(s_us_pos_y, 11) + c_int_acteur_pixel_height)
         then
-            o_tuile_id <= r_tuiles(s_current_tuile_index);
-            
-            -- Check if tile should be flipped horizontally
-            if r_tuile_flips(s_current_tuile_index)(0) = '1' then
-                o_tuile_pixel_x <= s_flipped_tuile_pixel_offset_x;
+            o_tuile_id <= r_tuiles(s_int_current_tuile_index);
+
+            -- Flip horizontal
+            if r_tuile_flips(s_int_current_tuile_index)(0) = '1' then
+                o_tuile_pixel_x <= s_slv_flipped_tuile_pixel_offset_x;
             else
-                o_tuile_pixel_x <= s_tuile_pixel_offset_x;
+                o_tuile_pixel_x <= s_slv_tuile_pixel_offset_x;
             end if;
             
-            -- Check if tile should be flipped vertically
-            if r_tuile_flips(s_current_tuile_index)(1) = '1' then
-                o_tuile_pixel_y <= s_flipped_tuile_pixel_offset_y;
+            -- Flip vertical
+            if r_tuile_flips(s_int_current_tuile_index)(1) = '1' then
+                o_tuile_pixel_y <= s_slv_flipped_tuile_pixel_offset_y;
             else
-                o_tuile_pixel_y <= s_tuile_pixel_offset_y;
+                o_tuile_pixel_y <= s_slv_tuile_pixel_offset_y;
             end if;
-        else
-            o_tuile_id <= (others => '0');
-            o_tuile_pixel_x <= (others => '0');
-            o_tuile_pixel_y <= (others => '0');
         end if;
     end process;
 end Behavioral;

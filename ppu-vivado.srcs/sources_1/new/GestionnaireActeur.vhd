@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity ActeurManager is
+entity GestionnaireActeur is
     Port ( clk : in std_logic;
            reset : in std_logic;
            i_acteur_id : in std_logic_vector(2 downto 0);
@@ -19,26 +19,26 @@ entity ActeurManager is
            o_tuile_id : out std_logic_vector(5 downto 0);
            o_tuile_pixel_x : out std_logic_vector(2 downto 0);
            o_tuile_pixel_y : out std_logic_vector(2 downto 0));
-end ActeurManager;
+end GestionnaireActeur;
 
-architecture Behavioral of ActeurManager is
-    constant c_nb_acteurs : integer := 8;
+architecture Behavioral of GestionnaireActeur is
+    constant c_nb_acteurs           : integer := 8;
     
-    type t_curr_acteur_array is array (0 to c_nb_acteurs-1) of std_logic_vector(5 downto 0);
-    type t_we_pos_array is array (0 to c_nb_acteurs-1) of std_logic;
-    type t_we_acteur_tuile_array is array (0 to c_nb_acteurs-1) of std_logic;
-    type t_we_tuile_flip_array is array (0 to c_nb_acteurs-1) of std_logic;
-    type t_o_tuile_id_array is array (0 to c_nb_acteurs-1) of std_logic_vector(5 downto 0);
-    type t_o_tuile_pixel_x_array is array (0 to c_nb_acteurs-1) of std_logic_vector(2 downto 0);
-    type t_o_tuile_pixel_y_array is array (0 to c_nb_acteurs-1) of std_logic_vector(2 downto 0);
+    type t_curr_acteur_array        is array (0 to c_nb_acteurs-1) of std_logic_vector(2 downto 0);
+    type t_we_pos_array             is array (0 to c_nb_acteurs-1) of std_logic;
+    type t_we_acteur_tuile_array    is array (0 to c_nb_acteurs-1) of std_logic;
+    type t_we_tuile_flip_array      is array (0 to c_nb_acteurs-1) of std_logic;
+    type t_o_tuile_id_array         is array (0 to c_nb_acteurs-1) of std_logic_vector(5 downto 0);
+    type t_o_tuile_pixel_x_array    is array (0 to c_nb_acteurs-1) of std_logic_vector(2 downto 0);
+    type t_o_tuile_pixel_y_array    is array (0 to c_nb_acteurs-1) of std_logic_vector(2 downto 0);
     
-    signal s_curr_acteur_array : t_curr_acteur_array;
-    signal s_we_pos_array : t_we_pos_array;
-    signal s_we_acteur_tuile_array : t_we_acteur_tuile_array;
-    signal s_we_tuile_flip_array : t_we_tuile_flip_array;
-    signal s_o_tuile_id_array : t_o_tuile_id_array;
-    signal s_o_tuile_pixel_x_array : t_o_tuile_pixel_x_array;
-    signal s_o_tuile_pixel_y_array : t_o_tuile_pixel_y_array;
+    signal s_curr_acteur_array      : t_curr_acteur_array       := (others => (others => '0'));
+    signal s_we_pos_array           : t_we_pos_array            := (others => '0');
+    signal s_we_acteur_tuile_array  : t_we_acteur_tuile_array   := (others => '0');
+    signal s_we_tuile_flip_array    : t_we_tuile_flip_array     := (others => '0');
+    signal s_o_tuile_id_array       : t_o_tuile_id_array        := (others => (others => '0'));
+    signal s_o_tuile_pixel_x_array  : t_o_tuile_pixel_x_array   := (others => (others => '0'));
+    signal s_o_tuile_pixel_y_array  : t_o_tuile_pixel_y_array   := (others => (others => '0'));
 
     component Acteur is
         Port ( clk : in std_logic;
@@ -59,10 +59,10 @@ architecture Behavioral of ActeurManager is
     end component;
 begin
     GEN_ACTEUR : for i in 0 to c_nb_acteurs - 1 generate
-        s_curr_acteur_array(i) <= std_logic_vector(to_unsigned(i, i_acteur_id'length));
-        s_we_pos_array(i) <= i_we_pos when i_acteur_id = s_curr_acteur_array(i) else '0';
-        s_we_acteur_tuile_array(i) <= i_we_acteur_tuile when i_acteur_id = s_curr_acteur_array(i) else '0';
-        s_we_tuile_flip_array(i) <= i_we_tuile_flip when i_acteur_id = s_curr_acteur_array(i) else '0';
+        s_curr_acteur_array(i)      <= std_logic_vector(to_unsigned(i, i_acteur_id'length));
+        s_we_pos_array(i)           <= i_we_pos when i_acteur_id = s_curr_acteur_array(i) else '0';
+        s_we_acteur_tuile_array(i)  <= i_we_acteur_tuile when i_acteur_id = s_curr_acteur_array(i) else '0';
+        s_we_tuile_flip_array(i)    <= i_we_tuile_flip when i_acteur_id = s_curr_acteur_array(i) else '0';
     
         acteur_inst_x : Acteur
         port map (
@@ -84,21 +84,19 @@ begin
         );
     end generate GEN_ACTEUR;
 
-    process(clk)
+    UT : process(s_o_tuile_id_array, s_o_tuile_pixel_x_array, s_o_tuile_pixel_y_array)
     begin
-        if rising_edge(clk) then
-            o_tuile_id <= (others => '0');
-            o_tuile_pixel_x <= (others => '0');
-            o_tuile_pixel_y <= (others => '0');
+        o_tuile_id <= (others => '0');
+        o_tuile_pixel_x <= (others => '0');
+        o_tuile_pixel_y <= (others => '0');
 
-            for i in 0 to c_nb_acteurs - 1 loop
-                if s_o_tuile_id_array(i) /= "000000" then
-                    o_tuile_id <= s_o_tuile_id_array(i);
-                    o_tuile_pixel_x <= s_o_tuile_pixel_x_array(i);
-                    o_tuile_pixel_y <= s_o_tuile_pixel_y_array(i);
-                    exit;
-                end if;
-            end loop;
-        end if;
+        for i in 0 to c_nb_acteurs - 1 loop
+            if s_o_tuile_id_array(i) /= "000000" then
+                o_tuile_id <= s_o_tuile_id_array(i);
+                o_tuile_pixel_x <= s_o_tuile_pixel_x_array(i);
+                o_tuile_pixel_y <= s_o_tuile_pixel_y_array(i);
+                exit;
+            end if;
+        end loop;
     end process;
 end Behavioral;

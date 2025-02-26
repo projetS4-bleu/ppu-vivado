@@ -56,8 +56,7 @@ begin
         o_pixel_offset_y => s_pixel_offset_y
     );
 
-    -- Horloge
-    process
+    horloge : process
     begin
         clk <= '1';
         loop
@@ -65,9 +64,8 @@ begin
             clk <= not clk;
         end loop;
     end process;
-    
-    -- Test
-    process
+
+    test : process
         variable v_tuile_col : std_logic_vector (6 downto 0);
         variable v_tuile_row : std_logic_vector (6 downto 0);
     begin
@@ -78,7 +76,7 @@ begin
     
         reset <= '1';
         wait for clk_cycle;
-        wait for clk_cycle / 5; -- optionnel: rel cher le reset juste apr s le front d'horloge
+        wait for clk_cycle / 5; -- optionnel: relacher le reset juste apres le front d'horloge
         reset <= '0';
         
         ------------------------------------------------
