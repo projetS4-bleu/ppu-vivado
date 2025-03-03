@@ -347,6 +347,11 @@ begin
         s_i_global_y <= std_logic_vector(to_unsigned(115, 10));
         wait for clk_cycle;
         assert_pixel(3, 2, 0, "GestionnaireActeur : Le pixel devrait correspondre a la tuile 3 avec le pixel offset x:2, y:0");
+        
+        s_i_global_x <= std_logic_vector(to_unsigned(114, 10));
+        s_i_global_y <= std_logic_vector(to_unsigned(112, 10));
+        wait for clk_cycle;
+        assert_pixel(3, 1, 3, "GestionnaireActeur : Le pixel devrait correspondre a la tuile 3 avec le pixel offset x:1, y:3");
 
         wait;
     end process;
