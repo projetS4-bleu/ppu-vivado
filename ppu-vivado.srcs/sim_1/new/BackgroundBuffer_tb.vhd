@@ -32,7 +32,7 @@ architecture Behavioral of BackgroundBuffer_tb is
     signal s_pixel_offset_x : std_logic_vector (2 downto 0);
     signal s_pixel_offset_y : std_logic_vector (2 downto 0);
     
-    procedure vram_assert (
+    procedure assert_tuile (
         tuile_id : in std_logic_vector(5 downto 0);
         pixel_offset_x, pixel_offset_y : in std_logic_vector(2 downto 0);
         err_msg : in string
@@ -41,7 +41,7 @@ architecture Behavioral of BackgroundBuffer_tb is
         assert(s_tuile_id = tuile_id and s_pixel_offset_x = pixel_offset_x and s_pixel_offset_y = pixel_offset_y)
         report err_msg
         severity failure;
-    end vram_assert;
+    end assert_tuile;
 begin
     dut : BackgroundBuffer
     port map (
@@ -98,7 +98,7 @@ begin
         s_we <= '0';
         s_global_x <= "0001111001";
         s_global_y <= "0000000100"; wait for clk_cycle;
-        vram_assert("001010", "001", "100", "VRAM: Tile id at index 15 should be 10 with pixel offset x:1 and y:4");
+        assert_tuile("001010", "001", "100", "BackgroundBuffer: Le tuile id a l'index 15 devrait etre 10 avec l'offset pixel x:1 and y:4");
         
         -- write tuile 30 => index 1000
         s_we <= '1';
@@ -110,12 +110,12 @@ begin
         s_we <= '0';
         s_global_x <= "1001000000";
         s_global_y <= "0000001000"; wait for clk_cycle;
-        vram_assert("010100", "000", "000", "VRAM: Tile id at index 200 should be 20 with pixel offset x:0 and y:0");
+        assert_tuile("010100", "000", "000", "BackgroundBuffer: Le tuile id a l'index 200 devrait etre 20 avec l'offset pixel x:0 and y:0");
         
         -- read index 1000 => expect tuile 30
         s_global_x <= "0101100010";
         s_global_y <= "0000010101"; wait for clk_cycle;
-        vram_assert("011110", "010", "101", "VRAM: Tile id at index 1000 should be 30 with pixel offset x:2 and y:5");
+        assert_tuile("011110", "010", "101", "BackgroundBuffer: Le tuile id a l'index 1000 devrait etre 30 avec l'offset pixel x:2 and y:5");
         
         ------------------------------------------------
         -- Test : Cas limites
@@ -136,12 +136,12 @@ begin
         s_we <= '0';
         s_global_x <= "0000000000";
         s_global_y <= "0000000000"; wait for clk_cycle;
-        vram_assert("000000", "000", "000", "VRAM: Tile id at index 0 should be 0 with pixel offset x:0 and y:0");
+        assert_tuile("000000", "000", "000", "BackgroundBuffer: Le tuile id a l'index 0 devrait etre 0 avec l'offset pixel x:0 and y:0");
         
         -- read index 16383 => expect tuile 63
         s_global_x <= "1111111111";
         s_global_y <= "1111111111"; wait for clk_cycle;
-        vram_assert("111111", "111", "111", "VRAM: Tile id at index 16383 should be 63 with pixel offset x:7 and y:7");
+        assert_tuile("111111", "111", "111", "BackgroundBuffer: Le tuile id a l'index 16383 devrait etre 67 avec l'offset pixel x:7 and y:7");
         
         ------------------------------------------------
         -- Test : Reset
@@ -161,7 +161,7 @@ begin
             for col in 0 to 127 loop
                 v_tuile_col := std_logic_vector(to_unsigned(col, 7));
                 s_global_x <= v_tuile_col & "000"; wait for clk_cycle;
-                vram_assert("000000", "000", "000", "VRAM: A tile id different than 0 was found after a reset");
+                assert_tuile("000000", "000", "000", "BackgroundBuffer: Un id de tuile different de 0 a ete trouve apres un reset");
             end loop;
         end loop;
         
