@@ -34,8 +34,10 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity BackgroundTuileBuffer is
     Port ( 
-        clk : in std_logic;
-        reset : in std_logic;
+        clk                 : in std_logic;
+        reset               : in std_logic;
+        i_we                : in std_logic;
+        i_write_color_code  : in std_logic_vector(3 downto 0);
         i_tuile_id          : in std_logic_vector  (5 downto 0);
         i_pixel_offset_x    : in std_logic_vector (2 downto 0);
         i_pixel_offset_y    : in std_logic_vector (2 downto 0);
@@ -67,6 +69,9 @@ begin
         if reset = '1' then
             r_tuile_buffer <= (others => (others => '0'));
         elsif rising_edge(clk) then
+            if i_we = '1' then
+                r_tuile_buffer(s_pixel_index) <= i_write_color_code;
+            end if;
             o_color_code <= r_tuile_buffer(s_pixel_index);
         end if;
     end process;
