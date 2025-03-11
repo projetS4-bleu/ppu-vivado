@@ -7,16 +7,17 @@ end BackgroundBuffer_tb;
 
 architecture Behavioral of BackgroundBuffer_tb is
     component BackgroundBuffer is
-    Port (
-        clk : in std_logic;
-        reset : in std_logic;
-        i_we : in std_logic;
-        i_write_tuile_id : in std_logic_vector(5 downto 0);
-        i_global_x : in std_logic_vector (9 downto 0);
-        i_global_y : in std_logic_vector (9 downto 0);
-        o_tuile_id : out std_logic_vector (5 downto 0);
-        o_pixel_offset_x : out std_logic_vector (2 downto 0);
-        o_pixel_offset_y : out std_logic_vector (2 downto 0)
+    Port ( clk : in std_logic;
+           reset : in std_logic;
+           i_we : in std_logic;
+           i_global_x : in std_logic_vector (9 downto 0);
+           i_global_y : in std_logic_vector (9 downto 0);
+           i_write_tuile_id : in std_logic_vector(5 downto 0);
+           i_write_tuile_col : in std_logic_vector(6 downto 0);
+           i_write_tuile_row : in std_logic_vector(6 downto 0);
+           o_tuile_id : out std_logic_vector (5 downto 0);
+           o_pixel_offset_x : out std_logic_vector (2 downto 0);
+           o_pixel_offset_y : out std_logic_vector (2 downto 0)
     );
     end component;
 
@@ -25,9 +26,11 @@ architecture Behavioral of BackgroundBuffer_tb is
     signal reset : std_logic;
     
     signal s_we : std_logic;
-    signal s_write_tuile_id : std_logic_vector(5 downto 0);
     signal s_global_x : std_logic_vector (9 downto 0);
     signal s_global_y : std_logic_vector (9 downto 0);
+    signal s_write_tuile_id : std_logic_vector(5 downto 0);
+    signal s_write_tuile_col : std_logic_vector(6 downto 0);
+    signal s_write_tuile_row : std_logic_vector(6 downto 0);
     signal s_tuile_id : std_logic_vector (5 downto 0);
     signal s_pixel_offset_x : std_logic_vector (2 downto 0);
     signal s_pixel_offset_y : std_logic_vector (2 downto 0);
@@ -48,9 +51,11 @@ begin
         clk => clk,
         reset => reset,
         i_we => s_we,
-        i_write_tuile_id => s_write_tuile_id,
         i_global_x => s_global_x,
         i_global_y => s_global_y,
+        i_write_tuile_id => s_write_tuile_id,
+        i_write_tuile_col => s_write_tuile_col,
+        i_write_tuile_row => s_write_tuile_row,
         o_tuile_id => s_tuile_id,
         o_pixel_offset_x => s_pixel_offset_x,
         o_pixel_offset_y => s_pixel_offset_y
@@ -86,13 +91,13 @@ begin
         -- write tuile 10 => index 15
         s_we <= '1';
         s_write_tuile_id <= "001010";
-        s_global_x <= "0001111000";
-        s_global_y <= "0000000000"; wait for clk_cycle;
+        s_write_tuile_col <= "0001111";
+        s_write_tuile_row <= "0000000"; wait for clk_cycle;
         
         -- write tuile 20 => index 200
         s_write_tuile_id <= "010100";
-        s_global_x <= "1001000000";
-        s_global_y <= "0000001000"; wait for clk_cycle;
+        s_write_tuile_col <= "1001000";
+        s_write_tuile_row <= "0000001"; wait for clk_cycle;
         
         -- read index 15 => expect tuile 10
         s_we <= '0';
@@ -103,8 +108,8 @@ begin
         -- write tuile 30 => index 1000
         s_we <= '1';
         s_write_tuile_id <= "011110";
-        s_global_x <= "0101100001";
-        s_global_y <= "0000010010"; wait for clk_cycle;
+        s_write_tuile_col <= "0101100";
+        s_write_tuile_row <= "0000010"; wait for clk_cycle;
         
         -- read index 200 => expect tuile 20
         s_we <= '0';
@@ -124,13 +129,13 @@ begin
         -- write tuile 0 => index 0
         s_we <= '1';
         s_write_tuile_id <= "000000";
-        s_global_x <= "0000000000";
-        s_global_y <= "0000000000"; wait for clk_cycle;
+        s_write_tuile_col <= "0000000";
+        s_write_tuile_row <= "0000000"; wait for clk_cycle;
         
         -- write tuile 64 => index 16383
         s_write_tuile_id <= "111111";
-        s_global_x <= "1111111111";
-        s_global_y <= "1111111111"; wait for clk_cycle;
+        s_write_tuile_col <= "1111111";
+        s_write_tuile_row <= "1111111"; wait for clk_cycle;
         
         -- read index 0 => expect tuile 0
         s_we <= '0';
