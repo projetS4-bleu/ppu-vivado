@@ -35,54 +35,53 @@ use IEEE.NUMERIC_STD.ALL;
 entity ActeurTuileBuffer is
     Port ( clk : in std_logic;
            reset : in std_logic;
-           tuile_id : in STD_LOGIC_VECTOR (5 downto 0);
-           tuile_pixel_x : in STD_LOGIC_VECTOR (2 downto 0);
-           tuile_pixel_y : in STD_LOGIC_VECTOR (2 downto 0);
-           we_color_code : in std_logic;
-           new_color_code : in STD_LOGIC_VECTOR (3 downto 0);
-           new_color_code_pos : in STD_LOGIC_VECTOR (11 downto 0);
-           color_code : out STD_LOGIC_VECTOR (3 downto 0));
+           i_tuile_id : in STD_LOGIC_VECTOR (5 downto 0);
+           i_tuile_pixel_x : in STD_LOGIC_VECTOR (2 downto 0);
+           i_tuile_pixel_y : in STD_LOGIC_VECTOR (2 downto 0);
+           i_we : in std_logic;
+           i_write_color_code : in STD_LOGIC_VECTOR (3 downto 0);
+           i_write_color_code_pos : in STD_LOGIC_VECTOR (11 downto 0);
+           o_color_code : out STD_LOGIC_VECTOR (3 downto 0));
 end ActeurTuileBuffer;
 
 architecture Behavioral of ActeurTuileBuffer is
-    constant pixel_cols : integer := 8;
-    constant pixel_rows : integer := 8;
-    constant nb_pixels  : integer := pixel_cols * pixel_rows;
-    constant nb_acteur_tuiles : integer := 64 * nb_pixels;
+    constant c_pixel_nb_cols : integer := 8;
+    constant c_pixel_nb_rows : integer := 8;
+    constant c_nb_acteur_tuiles_px : integer := 64 * c_pixel_nb_cols * c_pixel_nb_rows;    -- 64 tuiles x nb_pixels/tuile
     
-    type t_vram_buffer_type is array (0 to (nb_acteur_tuiles)-1) of std_logic_vector(3 downto 0);
+    type t_vram_buffer_type is array (0 to (c_nb_acteur_tuiles_px)-1) of std_logic_vector(3 downto 0);
     signal r_acteur_tuile_buffer : t_vram_buffer_type := (others => (others => '0'));
 
     signal s_pixel_col : unsigned(2 downto 0);
     signal s_pixel_row : unsigned(2 downto 0);
-    signal s_acteur_tuile : unsigned(5 downto 0);
+    signal s_tuile_id : unsigned(11 downto 0);
+    signal s_pixel_index : integer range 0 to (c_nb_acteur_tuiles_px)-1;
     
-    signal s_new_pixel_col : unsigned(2 downto 0);
-    signal s_new_pixel_row : unsigned(2 downto 0);
-    signal s_new_acteur_tuile : unsigned(5 downto 0);
-    
-    signal s_tuile_index : integer range 0 to (nb_acteur_tuiles)-1;
+    signal s_write_pixel_col : unsigned(2 downto 0);
+    signal s_write_pixel_row : unsigned(2 downto 0);
+    signal s_write_tuile_id : unsigned(11 downto 0);
+    signal s_write_pixel_index : integer range 0 to (c_nb_acteur_tuiles_px)-1;
+
 begin
-    s_pixel_col <= unsigned(tuile_pixel_x);
-    s_pixel_row <= unsigned(tuile_pixel_y);
-    s_acteur_tuile <= unsigned(tuile_id);
-    s_tuile_index <= to_integer(s_acteur_tuile + s_pixel_col + s_pixel_row * pixel_rows);
+    s_pixel_col <= unsigned(i_tuile_pixel_x);
+    s_pixel_row <= unsigned(i_tuile_pixel_y);
+    s_tuile_id <= shift_left(unsigned(i_tuile_id), 6); -- tuile_id x 64 px/tuiles
+    s_pixel_index <= to_integer(s_tuile_id + s_pixel_col + s_pixel_row * c_pixel_nb_rows);
     
+    s_write_tuile_id <= shift_left(unsigned(i_write_color_code_pos(11 downto 6)), 6) ;
+    s_write_pixel_col <= unsigned(i_write_color_code_pos(5 downto 3));
+    s_write_pixel_row <= unsigned(i_write_color_code_pos(2 downto 0));
+    s_write_pixel_index <= to_integer(s_write_tuile_id + s_write_pixel_col + s_write_pixel_row * c_pixel_nb_rows);
+
     process (clk, reset)
         begin
             if reset = '1' then
                 r_acteur_tuile_buffer <= (others => (others => '0'));
             elsif rising_edge(clk) then
-                if we_color_code = '1' then
-                    s_new_acteur_tuile <= unsigned(new_color_code_pos(11 downto 6));
-                    s_new_pixel_col <= unsigned(new_color_code_pos(5 downto 3));
-                    s_new_pixel_row <= unsigned(new_color_code_pos(2 downto 0));
-                    r_acteur_tuile_buffer(to_integer(s_new_acteur_tuile + s_new_pixel_col + s_new_pixel_row * pixel_rows))
-                         <= new_color_code;
+                if i_we = '1' then
+                    r_acteur_tuile_buffer(s_write_pixel_index) <= i_write_color_code;
                 end if;
-                
-                -- Lecture de la couleur à cette adresse
-                color_code <= r_acteur_tuile_buffer(s_tuile_index);
+                o_color_code <= r_acteur_tuile_buffer(s_pixel_index);
             end if;
         end process;
 
