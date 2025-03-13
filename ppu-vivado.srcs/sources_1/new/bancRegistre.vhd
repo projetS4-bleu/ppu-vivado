@@ -21,6 +21,7 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -31,55 +32,46 @@ use IEEE.STD_LOGIC_1164.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity bancRegistre is
+entity BancRegistre is
     Port ( clk          : in std_logic;
            reset        : in std_logic; 
-           addr_reg     : in STD_LOGIC_VECTOR (1 downto 0);
-           val_reg      : in STD_LOGIC_VECTOR (9 downto 0);
-           we_reg       : in STD_LOGIC_VECTOR (9 downto 0);
+           i_addr_reg   : in STD_LOGIC_VECTOR (0 downto 0);
+           i_val_reg    : in STD_LOGIC_VECTOR (9 downto 0);
+           i_we         : in std_logic;
            
-           pixel_x      : inout STD_LOGIC_VECTOR (9 downto 0);
-           pixel_y      : inout STD_LOGIC_VECTOR (9 downto 0);
-           offset_x     : inout STD_LOGIC_VECTOR (9 downto 0);
-           offset_y     : inout STD_LOGIC_VECTOR (9 downto 0));
-end bancRegistre;
+           o_offset_x   : out STD_LOGIC_VECTOR (9 downto 0);
+           o_offset_y   : out STD_LOGIC_VECTOR (9 downto 0));
+end BancRegistre;
 
-architecture Behavioral of bancRegistre is
-signal reset_vector : STD_LOGIC_VECTOR (9 downto 0);
+architecture Behavioral of BancRegistre is
+type t_vram_registre is array (natural range <>) of std_logic_vector (9 downto 0);
+signal r_reg : t_vram_registre(0 to 1) := (others => (others => '0'));
+signal s_offset_x: std_logic_vector(9 downto 0) := (others => '0');
+signal s_offset_y: std_logic_vector(9 downto 0) := (others => '0');
+
 begin
 
-process(clk)
-begin
-    
-    if rising_edge(clk) then
+process(clk, reset)
+    begin
         if reset = '1' then
-            pixel_x     <= "0000000000";
-            pixel_y     <= "0000000000";
-            offset_x    <= "0000000000";
-            offset_y    <= "0000000000";
-            --Logique inverser pour sauver un NOT dans le case
-            reset_vector<= "0000000000";
-        else
-           reset_vector <= "1111111111";
-           case (addr_reg) is
-                 when "00" =>
-                    offset_x <= ((offset_x and not(we_reg)) or (val_reg and we_reg)) and reset_vector;
-                 when "01" =>
-                    offset_y <= ((offset_y and not(we_reg)) or (val_reg and we_reg))and reset_vector;
-                 when "10" =>
-                    pixel_x <= ((pixel_x and not(we_reg)) or (val_reg and we_reg))and reset_vector;
-                 when "11" =>
-                    pixel_y <= ((pixel_y and not(we_reg)) or (val_reg and we_reg))and reset_vector;
-                 when others =>
-        end case; 
+            r_reg <= (others => (others => '0'));
+        elsif rising_edge(clk) then
+            if i_we = '1' then
+                r_reg(to_integer(unsigned(i_addr_reg))) <= i_val_reg;
+            end if;
+            if i_addr_reg = "0" then
+                s_offset_x <= r_reg(to_integer(unsigned(i_addr_reg)));
+                s_offset_y <= "0000000000";
+            else
+                s_offset_y <= r_reg(to_integer(unsigned(i_addr_reg)));
+                s_offset_x <= "0000000000";
+            end if;
         end if;
+    end process;
     
-        
+    o_offset_x <= s_offset_x;
+    o_offset_y <= s_offset_y;
+
     
-    end if;
-        
-
-
-end process;
 
 end Behavioral;
