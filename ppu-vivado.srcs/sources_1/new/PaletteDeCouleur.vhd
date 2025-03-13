@@ -35,11 +35,11 @@ entity PaletteDeCouleur is
     Port (
     clk : in std_logic ;
     reset : in std_logic ;
-    color_code : in std_logic_vector (3 downto 0); -- code couleur sélectionné
-    color_code_next : in std_logic_vector (3 downto 0); -- code couleur a mettre a jour
-    write_enable_color : in std_logic; -- signal d'ecriture pour mise a jour
-    new_rgb : in std_logic_vector (23 downto 0); -- nouvelle valeur rgb
-    rgb_color : out std_logic_vector(23 downto 0) -- sortie rgb 24 bits
+    i_color_code : in std_logic_vector (3 downto 0); -- code couleur sélectionné
+    i_color_code_dest : in std_logic_vector (3 downto 0); -- code couleur a mettre a jour
+    i_we : in std_logic; -- signal d'ecriture pour mise a jour
+    i_new_rgb : in std_logic_vector (23 downto 0); -- nouvelle valeur rgb
+    o_rgb_color : out std_logic_vector(23 downto 0) -- sortie rgb 24 bits
      );
 end PaletteDeCouleur;
 
@@ -89,13 +89,13 @@ begin
                 palette(15) <= x"228B22"; -- vert foncé
             else
                 -- Mise à jour de la palette si demandé
-                if write_enable_color = '1' then
-                    palette(to_integer(unsigned(color_code_next))) <= new_rgb;
+                if i_we = '1' then
+                    palette(to_integer(unsigned(i_color_code_dest))) <= i_new_rgb;
                 end if;
             end if;
             
             -- Sortie de la couleur actuelle
-            rgb_color <= palette(to_integer(unsigned(color_code)));
+            o_rgb_color <= palette(to_integer(unsigned(i_color_code)));
         end if;
     end process;
 end Behavioral;
