@@ -46,8 +46,6 @@ end BancRegistre;
 architecture Behavioral of BancRegistre is
 type t_vram_registre is array (natural range <>) of std_logic_vector (9 downto 0);
 signal r_reg : t_vram_registre(0 to 1) := (others => (others => '0'));
-signal s_offset_x: std_logic_vector(9 downto 0) := (others => '0');
-signal s_offset_y: std_logic_vector(9 downto 0) := (others => '0');
 
 begin
 
@@ -59,19 +57,10 @@ process(clk, reset)
             if i_we = '1' then
                 r_reg(to_integer(unsigned(i_addr_reg))) <= i_val_reg;
             end if;
-            if i_addr_reg = "0" then
-                s_offset_x <= r_reg(to_integer(unsigned(i_addr_reg)));
-                s_offset_y <= "0000000000";
-            else
-                s_offset_y <= r_reg(to_integer(unsigned(i_addr_reg)));
-                s_offset_x <= "0000000000";
-            end if;
         end if;
     end process;
     
-    o_offset_x <= s_offset_x;
-    o_offset_y <= s_offset_y;
-
-    
+    o_offset_x <= r_reg(0);
+    o_offset_y <= r_reg(1);
 
 end Behavioral;
